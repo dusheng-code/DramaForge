@@ -1,7 +1,5 @@
 # DramaForge — AI 短剧受控生产系统
 
-按照《DramaForge 实现规格 v1》完成的全量实现与验收交付。
-
 输入题材与预算，端到端产出分集剧本、镜头表、图/视频/TTS 提示词包、定妆图、首帧、视频资产、机读约束报告及成本报告。系统具备可中断、可恢复、人在回路介入与强确定性校验。
 
 ---
@@ -169,11 +167,13 @@ $ pytest -q
 
 - **`dramaforge.scripts.verify_provider`**:
   用于在配置了真实 `MINIMAX_API_KEY` 时发起生图、视频生成、TTS 真实扣费探针测试：
+  
   ```bash
   python -m dramaforge.scripts.verify_provider --mode all --timeout 60
   ```
 - **`dramaforge.scripts.embed_offline`**:
   用于在安装了 `FlagEmbedding` 重依赖后批量计算 BGE-M3 向量并回填 Milvus：
+  
   ```bash
   python -m dramaforge.scripts.embed_offline --batch-size 32
   ```
