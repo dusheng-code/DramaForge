@@ -158,6 +158,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     else:
         logger.info("web/dist not found ({}), 跳过前端挂载；用 `cd web && npm run build` 生成", dist)
 
+    @app.get("/favicon.ico", include_in_schema=False, response_model=None)
+    async def favicon():
+        """浏览器图标：返回 SVG 图标避免 404 告警。无副作用。"""
+        svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="8" fill="#2563eb"/>
+  <path d="M10 8h5a7 7 0 0 1 0 14h-5V8zm4 3.5v7h1a3.5 3.5 0 0 0 0-7h-1z" fill="#ffffff"/>
+  <circle cx="21" cy="20" r="2.5" fill="#38bdf8"/>
+</svg>"""
+        return Response(content=svg, media_type="image/svg+xml")
+
     @app.get("/", include_in_schema=False, response_model=None)
     async def index():
         """根路径：有前端 dist 时优先返回 index.html，否则给 JSON 说明。副作用：读磁盘。"""
