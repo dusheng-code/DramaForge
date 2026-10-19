@@ -152,6 +152,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     dist = cfg.web_dist_path
     if dist.is_dir():
         app.mount("/app", StaticFiles(directory=str(dist), html=True), name="web")
+        assets_dir = dist / "assets"
+        if assets_dir.is_dir():
+            app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
     else:
         logger.info("web/dist not found ({}), 跳过前端挂载；用 `cd web && npm run build` 生成", dist)
 

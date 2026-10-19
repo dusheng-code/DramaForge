@@ -48,6 +48,7 @@ function vueSfc() {
 }
 
 export default defineConfig({
+  base: './',
   plugins: [vueSfc()],
   server: {
     port: 5173,
