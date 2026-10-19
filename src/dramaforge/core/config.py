@@ -238,6 +238,11 @@ class Settings(BaseSettings):
         p = Path(self.runtime_dir)
         return p if p.is_absolute() else (Path.cwd() / p).resolve()
 
+    @property
+    def web_dist_path(self) -> Path:
+        """前端构建产物目录（<repo>/web/dist）；未构建时不存在。无副作用。"""
+        return Path(__file__).resolve().parents[3] / "web" / "dist"
+
     def role_llm(self, role: str) -> RoleLLMConfig:
         """读取 LLM_{ROLE}_* 一组配置，缺项回退到空值（由 LLMClient 判定不可用）。无副作用。"""
         key = f"llm_{role}"

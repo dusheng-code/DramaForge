@@ -261,6 +261,15 @@ class AssetStore:
         """人工驳回：未达上限回 PENDING（重抽），达上限置 REJECTED。副作用：写库。"""
         return await self.retry_or_reject(row, 0.0, reason)
 
+    async def release_holds(self, task_id: str) -> int:
+        """追加预算后释放全部 BUDGET_HOLD 行（回 PENDING 重新排队）。副作用：写库。"""
+        async with self.engine.begin() as conn:
+            result = await conn.execute(
+                text("UPDATE asset_state SET status='PENDING' WHERE task_id=:t AND status='BUDGET_HOLD'"),
+                {"t": task_id},
+            )
+        return int(getattr(result, "rowcount", 0) or 0)
+
     async def orphan(self, task_id: str, shot_ids: list[str] | None = None, upto_revision: int | None = None) -> int:
         """上游 revision 变更：把非 PASSED 与 PASSED 的旧行统一置 ORPHANED，保留文件与 cost。
 

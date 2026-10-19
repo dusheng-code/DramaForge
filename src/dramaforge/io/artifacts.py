@@ -322,6 +322,26 @@ def output_ok(path_str: str | None) -> bool:
     return bool(parts) and all(exists(Path(p)) for p in parts)
 
 
+def remove(path: Path | str) -> bool:
+    """删除单个产物文件（打回重抽时用）；不存在返回 False。副作用：删磁盘。"""
+    target = Path(path)
+    try:
+        target.unlink()
+        return True
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+    except OSError:
+        return False
+
+
+def existing_or_none(path_str: str | None) -> Path | None:
+    """把落库的路径还原成仍在磁盘上的 Path；不存在返回 None。无副作用。"""
+    if not path_str:
+        return None
+    target = Path(path_str)
+    return target if exists(target) else None
+
+
 def join_output(*paths_in: Path | str) -> str:
     """把多个产物路径拼成 output_path 列（os.pathsep 分隔），便于多产物阶段落库。无副作用。"""
     return os.pathsep.join(str(p) for p in paths_in)

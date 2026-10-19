@@ -15,6 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from ..contracts.artifacts import StageRow
 from ..contracts.enums import GLOBAL_SLOT, STAGES
+from ..obs.logs import route_logs_by_role
 from .events import Events
 from .state_store import StateStore
 from .transitions import GateViolation, NeedsHuman, derive_task_status
@@ -72,7 +73,10 @@ class Scheduler:
             await self.store.cas(row, "RUNNING", "FAILED", fail_reason=f"no handler for {row.stage}")
             return
         try:
-            output = await handler(row)
+            with route_logs_by_role(row.stage, row.task_id):
+                logger.info("stage enter: {} {} rev={}", row.stage, row.slot_key, row.revision)
+                output = await handler(row)
+                logger.info("stage exit: {} {} rev={}", row.stage, row.slot_key, row.revision)
             if output:
                 await self.store.set_output(row, output)
             await self.store.cas(row, "RUNNING", "PASSED", output_path=output)

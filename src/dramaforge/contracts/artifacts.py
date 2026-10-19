@@ -413,6 +413,9 @@ class PendingHumanItem(BaseModel):
     detail: str = ""
     actions: list[str] = []
     slot_key: str | None = None
+    # AMBIGUITY(§5.2 未列)：前端 Review 页要展示报价明细，此处携带 `{target_ids, items, est_total_cny}`
+    # 供 `POST /resolve` 直接回传；只带 id 与金额，不含正文（§12 事件载荷限制不适用于 HTTP 响应）。
+    payload: dict[str, Any] = {}
     created_at: str = ""
 
 
