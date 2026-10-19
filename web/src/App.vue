@@ -7,13 +7,13 @@ import Review from './views/Review.vue'
 import Board from './views/Board.vue'
 import Assets from './views/Assets.vue'
 
-/** 导航（手写视图切换，不引路由库） */
+/** 导航配置：添加生动的现代图标与中文标签 */
 const NAV = [
-  { key: 'submit', label: '提交任务' },
-  { key: 'progress', label: '进度' },
-  { key: 'review', label: '待决议' },
-  { key: 'board', label: '分镜板' },
-  { key: 'assets', label: '资产审核' },
+  { key: 'submit', label: '发起任务', icon: '✦' },
+  { key: 'progress', label: '生产进度', icon: '⚡' },
+  { key: 'review', label: '待办决议', icon: '⚖' },
+  { key: 'board', label: '分镜画廊', icon: '◫' },
+  { key: 'assets', label: '资产中心', icon: '◈' },
 ]
 
 const current = ref('submit')
@@ -168,7 +168,8 @@ onBeforeUnmount(() => {
           type="button"
           @click="current = item.key"
         >
-          {{ item.label }}
+          <span style="margin-right: 5px; opacity: 0.85;">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
         </button>
       </nav>
 

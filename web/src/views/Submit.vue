@@ -8,6 +8,13 @@ const ctx = inject('drama')
 const PLATFORMS = ['抖音', '快手', '红果', '视频号', '番茄']
 const DURATION_OPTIONS = [15, 20, 25, 30, 45, 60, 90, 120]
 
+const PRESET_TOPICS = [
+  '退婚后，我在急诊手术室救下首富外公，前夫全家悔疯了',
+  '真假千金归位：满级玄学老祖下山整顿豪门全员恶人',
+  '重回高三：我放弃当恋爱脑，带全家摆摊致富考上清华',
+  '战神退役后回归故里，发现女儿竟住狗窝，十万将士即刻奔赴',
+]
+
 /** 表单：字段名与 POST /api/drama/tasks body 完全一致（§12） */
 const form = reactive({
   topic: '',
@@ -18,6 +25,10 @@ const form = reactive({
   strict_mode: false,
   overridesText: '{}',
 })
+
+function pickPreset(topic) {
+  form.topic = topic
+}
 
 const submitting = ref(false)
 const formError = ref('')
@@ -142,7 +153,20 @@ async function submit() {
             maxlength="512"
             placeholder="例：被退婚的县城女医生，靠一场急诊手术翻盘，打脸前夫一家"
           ></textarea>
-          <span class="field-hint">一句话说清主角、冲突与爽点；{{ topicLen }}/512</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; align-items: center;">
+            <span class="muted small" style="font-size: 11.5px;">快速预填：</span>
+            <button
+              v-for="(t, idx) in PRESET_TOPICS"
+              :key="idx"
+              type="button"
+              class="btn btn-ghost"
+              style="padding: 2px 8px; font-size: 11.5px; border-radius: 999px; background: #f1f5f9;"
+              @click="pickPreset(t)"
+            >
+              {{ t.slice(0, 12) }}…
+            </button>
+          </div>
+          <span class="field-hint" style="margin-top: 4px;">一句话说清主角、冲突与爽点；字数：{{ topicLen }}/512</span>
         </label>
 
         <div class="field-row">
