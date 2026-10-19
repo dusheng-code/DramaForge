@@ -132,6 +132,11 @@ class ScriptAgent:
             text = await client.agenerate_text(_system("script_episode"), "请产出单集剧本。" + _input_block(payload))
             if not text.strip():
                 raise RuntimeError(f"empty episode text for ep{ep.episode}")
+            # 提前用 blocks 阶段的同一解析器验格式，坏输出在本阶段就失败，不浪费后续阶段。
+            if not parse_blocks(text, ep.episode)[0]:
+                raise RuntimeError(
+                    f"ep{ep.episode} 剧本格式不符合约定（未识别到任何 动作:/台词(id): 行），丢弃本轮输出"
+                )
             target = paths.episode_md(ep.episode)
             io.write_text(target, text)
             written.append(str(target))

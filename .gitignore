@@ -12,6 +12,7 @@ build/
 
 # 运行时产物（唯一事实源在 MySQL，磁盘只是产物缓存）
 var/
+test_out.txt
 
 # 密钥与环境
 .env

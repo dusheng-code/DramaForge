@@ -15,6 +15,7 @@ dependencies = [
     "pymilvus>=2.4",
     "python-multipart>=0.0.9",
     "mistune>=3.0",
+    "flagembedding>=1.4.2",
 ]
 
 [project.optional-dependencies]
