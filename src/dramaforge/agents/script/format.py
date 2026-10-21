@@ -18,12 +18,17 @@ import re
 from ...contracts.artifacts import Block, Scene
 from ...contracts.ids import block_id, scene_id
 
-EPISODE_RE = re.compile(r"^##\s*第\s*(?P<ep>\d+)\s*集\s*(?P<title>.*)$")
-SCENE_RE = re.compile(r"^###\s*场\s*(?P<scene>\d+)\s*(?P<loc>[^·|]*)[·|]?\s*(?P<tod>.*)$")
+EPISODE_RE = re.compile(r"^#+\s*第\s*(?P<ep>\d+)\s*集\s*(?P<title>.*)$")
+SCENE_RE = re.compile(r"^#+\s*场\s*(?P<scene>\d+)\s*(?P<loc>.*)$")
 CAST_RE = re.compile(r"^人物\s*[:：]\s*(?P<ids>.*)$")
 ANCHOR_RE = re.compile(r"^锚\s*[:：]\s*(?P<text>.*)$")
 ACTION_RE = re.compile(r"^[-*]\s*动作\s*[:：]\s*(?P<text>.*)$")
 LINE_RE = re.compile(r"^[-*]\s*台词\s*[（(](?P<who>[^）)]*)[）)]\s*[:：]\s*(?P<text>.*)$")
+
+# 兼容格式 1: `- character_id：（动作）｜台词` 或 `- character_id: 台词`
+ALT_LINE_RE = re.compile(r"^[-*]\s*(?P<who>[a-zA-Z0-9_\u4e00-\u9fa5]+)\s*[:：]\s*(?:[（(](?P<act>[^）)]*)[）)])?\s*[|｜]?\s*(?P<text>.*)$")
+# 兼容格式 2: `character_id: 台词` 无列表符号
+BARE_LINE_RE = re.compile(r"^(?P<who>[a-zA-Z0-9_\u4e00-\u9fa5]+)\s*[:：]\s*(?:[（(](?P<act>[^）)]*)[）)])?\s*[|｜]?\s*(?P<text>.*)$")
 
 FALLBACK_ANCHOR_PREFIX = "场锚"
 
@@ -89,8 +94,11 @@ def parse_blocks(md_text: str, episode: int) -> tuple[list[Block], list[Scene]]:
         if m:
             flush_scene()
             scene_no = int(m.group("scene"))
-            loc = (m.group("loc") or "").strip()
-            tod = (m.group("tod") or "").strip()
+            raw_loc = (m.group("loc") or "").strip()
+            # 拆分地点与时间（如 "内 · 高三教室 · 日"）
+            parts = [p.strip() for p in re.split(r"[·|/]", raw_loc) if p.strip()]
+            loc = parts[1] if len(parts) >= 2 and parts[0] in {"内", "外", "日", "夜"} else (parts[0] if parts else "默认场景")
+            tod = parts[-1] if len(parts) >= 2 else "日"
             cur_scene = {
                 "scene": scene_no,
                 "location": loc,
@@ -150,6 +158,56 @@ def parse_blocks(md_text: str, episode: int) -> tuple[list[Block], list[Scene]]:
                 )
             )
             cur_scene["block_ids"].append(bid)
+            continue
+
+        # 兼容匹配 ALT_LINE_RE 或 BARE_LINE_RE
+        m = ALT_LINE_RE.match(line) or BARE_LINE_RE.match(line)
+        if m:
+            if cur_scene is None:
+                scene_no += 1
+                cur_scene = {
+                    "scene": scene_no,
+                    "location": "默认场景",
+                    "time_of_day": "日",
+                    "anchor": "默认场景，日",
+                    "characters": [],
+                    "block_ids": [],
+                }
+            who = (m.group("who") or "").strip()
+            act = (m.group("act") or "").strip()
+            text = (m.group("text") or "").strip()
+            if who and who not in cur_scene["characters"]:
+                cur_scene["characters"].append(who)
+            if act:
+                seq_in_episode += 1
+                act_bid = block_id(episode, seq_in_episode)
+                blocks.append(
+                    Block(
+                        block_id=act_bid,
+                        episode=episode,
+                        scene=cur_scene["scene"],
+                        seq=seq_in_episode,
+                        summary=f"{who} {act}"[:60],
+                        text=act,
+                        characters=[who],
+                    )
+                )
+                cur_scene["block_ids"].append(act_bid)
+            if text:
+                seq_in_episode += 1
+                line_bid = block_id(episode, seq_in_episode)
+                blocks.append(
+                    Block(
+                        block_id=line_bid,
+                        episode=episode,
+                        scene=cur_scene["scene"],
+                        seq=seq_in_episode,
+                        summary=f"{who}: {text}"[:60],
+                        text=text,
+                        characters=[who],
+                    )
+                )
+                cur_scene["block_ids"].append(line_bid)
             continue
     flush_scene()
     return blocks, scenes
